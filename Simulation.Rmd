@@ -1,0 +1,74 @@
+---
+title: "Causal Effect with interference"
+author: "Sohyeon Kim"
+output: 
+  github_document:
+    pandoc_args: --webtex
+---
+
+
+```{r warning=FALSE, message = FALSE}
+library(tidyverse)
+```
+
+
+# 1. Simulation
+
+This is a scenario for binary outcomes, heterogenoeus group between groups. 
+
+## 1-1. Step 1 
+
+Of the 4000 individuals in the population, $x_{ij}$ is generated as follows :
+
+$$x_{ij} = \begin{cases}0 &\text{for randomly selected 480 samples}\\1 &\text{for another 480 random samples}\\2&\text{for remaining individuals} \end{cases}$$
+
+
+```{r}
+set.seed(0)
+x0 <- rep(0, 480)
+x1 <- rep(1, 480)
+x2 <- rep(2, 4000-480*2)
+
+x <- sample(c(x0, x1, x2))
+```
+
+
+
+Potential outcome is defined as follows : 
+
+$$y_{ij}(z_{ij}, \alpha_{ij})=\begin{cases} g_iz_{ij}&\text{if }x_{ij}=2\text{ and }i=1,2\\g_i(1-z_{ij})&\text{if }x_{ij}=2\text{ and }i=3,4\\x_{ij}&\text{otherwise}\end{cases}$$
+
+## 1-2. Step 2
+
+Groups were assigned $\alpha_0, \alpha_1$ and individuals assigned z = 1,0 using two stage permutation randomization. 
+
+```{r}
+g <- sample(c(1, 1, 0, 0))
+
+z <- list()
+for(i in 1:length(g)) {
+  if(g[i] == 1) {
+    z[[i]] <- sample(c(rep(0, 500), rep(1, 500)))
+  } else {z[[i]] <- sample(c(rep(0, 800), rep(1, 200)))}
+}
+
+data <-  bind_cols(z) %>%
+  `colnames<-`(1:4) %>%
+  gather(key = "group_idx", value = z) %>%
+  bind_cols(data.frame(g = rep(g, each = 1000), x = x))
+
+y <- rep(NA, 4000)
+for(i in 1:nrow(data)) {
+  if(data$x[i] == 2) {
+    y[i] <- ifelse(data$group_idx[i] %in% 1:2, data$g[i]*data$z[i], data$g[i]*(1-data$z[i]))
+  } else {y[i] <- x[i]}
+}
+
+data <- mutate(data, y = y)
+```
+
+
+
+
+
+
