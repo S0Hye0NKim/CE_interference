@@ -60,6 +60,7 @@ for(i in 1:length(g)) {
   } else {z[[i]] <- sample(c(rep(0, 800), rep(1, 200)))}
 }
 
+
 data <-  bind_cols(z) %>%
   `colnames<-`(1:4) %>%
   gather(key = "group_idx", value = z) %>%
@@ -90,6 +91,10 @@ summary <- data %>%
   mutate(g_i = g) %>%
   select(group_idx, g_i, Total_treated, Cases_treated, Total_control, Cases_control)
 
+K <- summary$Total_treated
+N <- length(g)
+C <- sum(g)
+
 summary %>% pander()
 ```
 
@@ -110,13 +115,13 @@ summary %>% pander()
 "\\text{Cases treated }= \\sum_jZ_{ij}Y_{ij}(Z_{i}) \\text{ when }Z_{ij} = 1")
 
 ![\\text{Total treated }= \\sum\_j(1-Z\_{ij}) \\text{ when }Z\_{ij}
-= 1](https://latex.codecogs.com/png.latex?%5Ctext%7BTotal%20treated%20%7D%3D%20%5Csum_j%281-Z_%7Bij%7D%29%20%5Ctext%7B%20when%20%7DZ_%7Bij%7D%20%3D%201
-"\\text{Total treated }= \\sum_j(1-Z_{ij}) \\text{ when }Z_{ij} = 1")
+= 0](https://latex.codecogs.com/png.latex?%5Ctext%7BTotal%20treated%20%7D%3D%20%5Csum_j%281-Z_%7Bij%7D%29%20%5Ctext%7B%20when%20%7DZ_%7Bij%7D%20%3D%200
+"\\text{Total treated }= \\sum_j(1-Z_{ij}) \\text{ when }Z_{ij} = 0")
 
 ![\\text{Cases treated }= \\sum\_j(1-Z\_{ij})Y\_{ij}(Z\_{i}) \\text{
 when }Z\_{ij}
-= 1](https://latex.codecogs.com/png.latex?%5Ctext%7BCases%20treated%20%7D%3D%20%5Csum_j%281-Z_%7Bij%7D%29Y_%7Bij%7D%28Z_%7Bi%7D%29%20%5Ctext%7B%20when%20%7DZ_%7Bij%7D%20%3D%201
-"\\text{Cases treated }= \\sum_j(1-Z_{ij})Y_{ij}(Z_{i}) \\text{ when }Z_{ij} = 1")
+= 0](https://latex.codecogs.com/png.latex?%5Ctext%7BCases%20treated%20%7D%3D%20%5Csum_j%281-Z_%7Bij%7D%29Y_%7Bij%7D%28Z_%7Bi%7D%29%20%5Ctext%7B%20when%20%7DZ_%7Bij%7D%20%3D%200
+"\\text{Cases treated }= \\sum_j(1-Z_{ij})Y_{ij}(Z_{i}) \\text{ when }Z_{ij} = 0")
 
 ![g\_i=1](https://latex.codecogs.com/png.latex?g_i%3D1 "g_i=1") when
 group assignment of group i is
@@ -126,18 +131,24 @@ group assignment of group i is
 group assignment of group i is
 ![\\phi](https://latex.codecogs.com/png.latex?%5Cphi "\\phi")
 
+# 2\. Point Estimate
+
 ### Direct Effect
 
 ``` r
-summary %>% mutate(PO_1 = Cases_treated/Total_treated, 
+data_CE_D <- summary %>% mutate(PO_1 = Cases_treated/Total_treated, 
                    PO_0 = Cases_control/Total_control) %>%
   select(group_idx, PO_1, PO_0) %>% 
   split(.$group_idx) %>%
   lapply(FUN = function(x) data.frame(CE_D = x$PO_0 - x$PO_1)) %>%
   bind_rows(.id = "grou_idx") %>%
-  mutate(g = g) %>%
+  mutate(g = g)
+
+CE_D <- data_CE_D %>%
   group_by(g) %>%
-  summarise(CE_D = mean(CE_D)) %>% pander
+  summarise(CE_D = mean(CE_D)) 
+
+pander(CE_D)
 ```
 
 | g |  CE\_D   |
@@ -151,9 +162,9 @@ summary %>% mutate(PO_1 = Cases_treated/Total_treated,
 "\\bar{CE}^D(\\psi)= \\sum_{i=1}^2\\frac{\\bar{CE}_i^D(\\psi)}{2} = -0.749")  
 
   
-![\\bar{CE}^D(\\phi)= \\sum\_{i=1}^2\\frac{\\bar{CE}\_i^D(\\phi)}{2}
-= 0.00625](https://latex.codecogs.com/png.latex?%5Cbar%7BCE%7D%5ED%28%5Cphi%29%3D%20%5Csum_%7Bi%3D1%7D%5E2%5Cfrac%7B%5Cbar%7BCE%7D_i%5ED%28%5Cphi%29%7D%7B2%7D%20%3D%200.00625
-"\\bar{CE}^D(\\phi)= \\sum_{i=1}^2\\frac{\\bar{CE}_i^D(\\phi)}{2} = 0.00625")  
+![\\bar{CE}^D(\\phi)= \\sum\_{i=3}^4\\frac{\\bar{CE}\_i^D(\\phi)}{2}
+= 0.00625](https://latex.codecogs.com/png.latex?%5Cbar%7BCE%7D%5ED%28%5Cphi%29%3D%20%5Csum_%7Bi%3D3%7D%5E4%5Cfrac%7B%5Cbar%7BCE%7D_i%5ED%28%5Cphi%29%7D%7B2%7D%20%3D%200.00625
+"\\bar{CE}^D(\\phi)= \\sum_{i=3}^4\\frac{\\bar{CE}_i^D(\\phi)}{2} = 0.00625")  
 
 ### Indirect Effect
 
@@ -214,6 +225,76 @@ summary %>%
   
 ![\\begin{aligned}\\bar{CE}^O(\\phi,\\psi)&=\\bar{Y}(\\phi)-\\bar{Y}(\\psi)\\\\&=\\sum\_{i=3}^4\\frac{\\bar{Y}\_i(\\phi)}{2}-\\sum\_{i=1}^2\\frac{\\bar{Y}\_i(\\psi)}{2}\\\\&=0.116-0.505=-0.389\\end{aligned}](https://latex.codecogs.com/png.latex?%5Cbegin%7Baligned%7D%5Cbar%7BCE%7D%5EO%28%5Cphi%2C%5Cpsi%29%26%3D%5Cbar%7BY%7D%28%5Cphi%29-%5Cbar%7BY%7D%28%5Cpsi%29%5C%5C%26%3D%5Csum_%7Bi%3D3%7D%5E4%5Cfrac%7B%5Cbar%7BY%7D_i%28%5Cphi%29%7D%7B2%7D-%5Csum_%7Bi%3D1%7D%5E2%5Cfrac%7B%5Cbar%7BY%7D_i%28%5Cpsi%29%7D%7B2%7D%5C%5C%26%3D0.116-0.505%3D-0.389%5Cend%7Baligned%7D
 "\\begin{aligned}\\bar{CE}^O(\\phi,\\psi)&=\\bar{Y}(\\phi)-\\bar{Y}(\\psi)\\\\&=\\sum_{i=3}^4\\frac{\\bar{Y}_i(\\phi)}{2}-\\sum_{i=1}^2\\frac{\\bar{Y}_i(\\psi)}{2}\\\\&=0.116-0.505=-0.389\\end{aligned}")  
+
+# 3\. Variance and Confidence Interval
+
+### Direct Effect
+
+``` r
+var_WI <- data %>%
+  group_by(group_idx, z) %>%
+  summarise(var = var(y))
+
+var_i1 <- var_WI %>% filter(z == 1) %>% .$var
+var_i0 <- var_WI %>% filter(z == 0) %>% .$var
+
+var_CE_D_given_S <- var_i1/K + var_i0/(1000-K)
+
+var_D_psi <- data_CE_D %>% 
+  filter(g == 1) %>%
+  .$CE_D %>% var
+
+var_CE_D_psi <- (1-C/N)*var_D_psi/C + sum(var_CE_D_given_S*g)/(C*N)
+var_CE_D_psi
+```
+
+    ## [1] 0.0001343808
+
+``` r
+var_D_phi <- data_CE_D %>%
+  filter(g == 0) %>%
+  .$CE_D %>% var
+
+var_CE_D_phi <- (1-(N-C)/N)*var_D_phi/(N-C) + sum(var_CE_D_given_S*(1-g))/(C*(N-C))
+var_CE_D_phi
+```
+
+    ## [1] 0.0003635765
+
+  
+![\\begin{aligned}\\hat{Var}\\bigg(\\hat{CE}^D(\\psi)\\bigg)&=(1-\\frac{C}{N})\\frac{\\hat{\\sigma}\_D^2(\\psi)}{C}+\\frac{1}{CN}\\sum\_{i=1}^N\\hat{Var}\\bigg(\\hat{CE}\_i^D(\\psi)|S\_i=1\\bigg)S\_i\\\\&=0.0001343808\\end{aligned}](https://latex.codecogs.com/png.latex?%5Cbegin%7Baligned%7D%5Chat%7BVar%7D%5Cbigg%28%5Chat%7BCE%7D%5ED%28%5Cpsi%29%5Cbigg%29%26%3D%281-%5Cfrac%7BC%7D%7BN%7D%29%5Cfrac%7B%5Chat%7B%5Csigma%7D_D%5E2%28%5Cpsi%29%7D%7BC%7D%2B%5Cfrac%7B1%7D%7BCN%7D%5Csum_%7Bi%3D1%7D%5EN%5Chat%7BVar%7D%5Cbigg%28%5Chat%7BCE%7D_i%5ED%28%5Cpsi%29%7CS_i%3D1%5Cbigg%29S_i%5C%5C%26%3D0.0001343808%5Cend%7Baligned%7D
+"\\begin{aligned}\\hat{Var}\\bigg(\\hat{CE}^D(\\psi)\\bigg)&=(1-\\frac{C}{N})\\frac{\\hat{\\sigma}_D^2(\\psi)}{C}+\\frac{1}{CN}\\sum_{i=1}^N\\hat{Var}\\bigg(\\hat{CE}_i^D(\\psi)|S_i=1\\bigg)S_i\\\\&=0.0001343808\\end{aligned}")  
+
+  
+![\\hat{\\sigma}\_D^2(\\psi)=\\sum\_{i=1}^N\\bigg(\\hat{CE}\_i^D(\\psi)-\\hat{CE}^D(\\psi)\\bigg)^2S\_i\\bigg/(C-1)](https://latex.codecogs.com/png.latex?%5Chat%7B%5Csigma%7D_D%5E2%28%5Cpsi%29%3D%5Csum_%7Bi%3D1%7D%5EN%5Cbigg%28%5Chat%7BCE%7D_i%5ED%28%5Cpsi%29-%5Chat%7BCE%7D%5ED%28%5Cpsi%29%5Cbigg%29%5E2S_i%5Cbigg%2F%28C-1%29
+"\\hat{\\sigma}_D^2(\\psi)=\\sum_{i=1}^N\\bigg(\\hat{CE}_i^D(\\psi)-\\hat{CE}^D(\\psi)\\bigg)^2S_i\\bigg/(C-1)")  
+
+  
+![\\hat{Var}\\bigg(\\hat{CE}\_i^D(\\psi)|S\_i=1\\bigg)=\\frac{\\hat{\\sigma}\_{i1}^2(\\psi)}{K\_i}+\\frac{\\sigma\_{i0}^2(\\psi)}{n\_i-K\_i}](https://latex.codecogs.com/png.latex?%5Chat%7BVar%7D%5Cbigg%28%5Chat%7BCE%7D_i%5ED%28%5Cpsi%29%7CS_i%3D1%5Cbigg%29%3D%5Cfrac%7B%5Chat%7B%5Csigma%7D_%7Bi1%7D%5E2%28%5Cpsi%29%7D%7BK_i%7D%2B%5Cfrac%7B%5Csigma_%7Bi0%7D%5E2%28%5Cpsi%29%7D%7Bn_i-K_i%7D
+"\\hat{Var}\\bigg(\\hat{CE}_i^D(\\psi)|S_i=1\\bigg)=\\frac{\\hat{\\sigma}_{i1}^2(\\psi)}{K_i}+\\frac{\\sigma_{i0}^2(\\psi)}{n_i-K_i}")  
+
+  
+![\\hat{\\sigma}\_{i1}^2(\\psi)=\\sum\_{j=1}^{n\_i}\\{Y\_{ij}(1;\\psi)-\\hat{Y}\_{i}(1;\\psi)\\}^2Z\_{ij}/(K\_i-1)](https://latex.codecogs.com/png.latex?%5Chat%7B%5Csigma%7D_%7Bi1%7D%5E2%28%5Cpsi%29%3D%5Csum_%7Bj%3D1%7D%5E%7Bn_i%7D%5C%7BY_%7Bij%7D%281%3B%5Cpsi%29-%5Chat%7BY%7D_%7Bi%7D%281%3B%5Cpsi%29%5C%7D%5E2Z_%7Bij%7D%2F%28K_i-1%29
+"\\hat{\\sigma}_{i1}^2(\\psi)=\\sum_{j=1}^{n_i}\\{Y_{ij}(1;\\psi)-\\hat{Y}_{i}(1;\\psi)\\}^2Z_{ij}/(K_i-1)")  
+
+  
+![\\hat{\\sigma}\_{i0}^2(\\psi)=\\sum\_{j=1}^{n\_i}\\{Y\_{ij}(0;\\psi)-\\hat{Y}\_{i}(0;\\psi)\\}^2(1-Z\_{ij})/(n\_i-K\_i-1)](https://latex.codecogs.com/png.latex?%5Chat%7B%5Csigma%7D_%7Bi0%7D%5E2%28%5Cpsi%29%3D%5Csum_%7Bj%3D1%7D%5E%7Bn_i%7D%5C%7BY_%7Bij%7D%280%3B%5Cpsi%29-%5Chat%7BY%7D_%7Bi%7D%280%3B%5Cpsi%29%5C%7D%5E2%281-Z_%7Bij%7D%29%2F%28n_i-K_i-1%29
+"\\hat{\\sigma}_{i0}^2(\\psi)=\\sum_{j=1}^{n_i}\\{Y_{ij}(0;\\psi)-\\hat{Y}_{i}(0;\\psi)\\}^2(1-Z_{ij})/(n_i-K_i-1)")  
+
+``` r
+CE_D_psi <- CE_D %>% filter(g == 1) %>% .$CE_D
+CE_D_phi <- CE_D %>% filter(g == 0) %>% .$CE_D
+
+c(CE_D_psi - 1.96 * sqrt(var_CE_D_psi), CE_D_psi + 1.96 * sqrt(var_CE_D_psi))
+```
+
+    ## [1] -0.7717209 -0.7262791
+
+``` r
+c(CE_D_phi - 1.96 * sqrt(var_CE_D_phi), CE_D_phi + 1.96 * sqrt(var_CE_D_phi))
+```
+
+    ## [1] -0.03674766  0.03799766
 
 # Reference
 
