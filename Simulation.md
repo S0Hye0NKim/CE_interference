@@ -156,6 +156,20 @@ pander(CE_D)
 | 0 | 0.000625 |
 | 1 | \-0.749  |
 
+``` r
+CE_D_psi <- CE_D %>% filter(g == 1) %>% .$CE_D
+CE_D_psi
+```
+
+    ## [1] -0.749
+
+``` r
+CE_D_phi <- CE_D %>% filter(g == 0) %>% .$CE_D
+CE_D_phi
+```
+
+    ## [1] 0.000625
+
   
 ![\\bar{CE}^D(\\psi)= \\sum\_{i=1}^2\\frac{\\bar{CE}\_i^D(\\psi)}{2} =
 -0.749](https://latex.codecogs.com/png.latex?%5Cbar%7BCE%7D%5ED%28%5Cpsi%29%3D%20%5Csum_%7Bi%3D1%7D%5E2%5Cfrac%7B%5Cbar%7BCE%7D_i%5ED%28%5Cpsi%29%7D%7B2%7D%20%3D%20-0.749
@@ -169,15 +183,23 @@ pander(CE_D)
 ### Indirect Effect
 
 ``` r
-summary %>% mutate(PO_0 = Cases_control/Total_control) %>%
+summary_I <- summary %>% mutate(PO_0 = Cases_control/Total_control) %>%
   group_by(g_i) %>%
-  summarise(PO_0 = mean(PO_0)) %>% pander
+  summarise(PO_0 = mean(PO_0)) 
+pander(summary_I)
 ```
 
 | g\_i | PO\_0  |
 | :--: | :----: |
 |  0   | 0.1156 |
 |  1   |  0.13  |
+
+``` r
+CE_I <- (summary_I %>% filter(g_i == 0) %>% .$PO_0) - (summary_I %>% filter(g_i == 1) %>% .$PO_0)
+CE_I
+```
+
+    ## [1] -0.014375
 
   
 ![\\begin{aligned}\\bar{CE}^I(\\phi,
@@ -189,16 +211,24 @@ summary %>% mutate(PO_0 = Cases_control/Total_control) %>%
 ### Total Effect
 
 ``` r
-summary %>% mutate(PO_1 = Cases_treated/Total_treated, 
+summary_T <- summary %>% mutate(PO_1 = Cases_treated/Total_treated, 
                    PO_0 = Cases_control/Total_control) %>%
   group_by(g_i) %>%
-  summarise(PO_1 = mean(PO_1), PO_0 = mean(PO_0)) %>% pander
+  summarise(PO_1 = mean(PO_1), PO_0 = mean(PO_0)) 
+pander(summary_T)
 ```
 
 | g\_i | PO\_1 | PO\_0  |
 | :--: | :---: | :----: |
 |  0   | 0.115 | 0.1156 |
 |  1   | 0.879 |  0.13  |
+
+``` r
+CE_T <- (summary_T %>% filter(g_i == 0) %>% .$PO_0) - (summary_T %>% filter(g_i == 1) %>% .$PO_1)
+CE_T
+```
+
+    ## [1] -0.763375
 
   
 ![\\begin{aligned}\\bar{CE}^T(\\phi,\\psi)&=\\bar{Y}(0;\\phi)-\\bar{Y}(1;\\psi)\\\\&=\\sum\_{i=3}^4\\frac{\\bar{Y}\_i(0;\\phi)}{3}-\\sum\_{i=1}^2\\frac{\\bar{Y}\_i(1;\\psi)}{2}\\\\&=0.116-0.879=-0.763\\end{aligned}](https://latex.codecogs.com/png.latex?%5Cbegin%7Baligned%7D%5Cbar%7BCE%7D%5ET%28%5Cphi%2C%5Cpsi%29%26%3D%5Cbar%7BY%7D%280%3B%5Cphi%29-%5Cbar%7BY%7D%281%3B%5Cpsi%29%5C%5C%26%3D%5Csum_%7Bi%3D3%7D%5E4%5Cfrac%7B%5Cbar%7BY%7D_i%280%3B%5Cphi%29%7D%7B3%7D-%5Csum_%7Bi%3D1%7D%5E2%5Cfrac%7B%5Cbar%7BY%7D_i%281%3B%5Cpsi%29%7D%7B2%7D%5C%5C%26%3D0.116-0.879%3D-0.763%5Cend%7Baligned%7D
@@ -211,16 +241,24 @@ summary %>% mutate(PO_1 = Cases_treated/Total_treated,
 ### Overall Effect
 
 ``` r
-summary %>%
+summary_O <- summary %>%
   mutate(PO = (Cases_treated + Cases_control)/(Total_treated + Total_control)) %>%
   group_by(g_i) %>%
-  summarise(PO = mean(PO)) %>% pander
+  summarise(PO = mean(PO))
+pander(summary_O)
 ```
 
 | g\_i |   PO   |
 | :--: | :----: |
 |  0   | 0.1155 |
 |  1   | 0.5045 |
+
+``` r
+CE_O <- (summary_O %>% filter(g_i == 0) %>% .$PO) - (summary_O %>% filter(g_i == 1) %>% .$PO)
+CE_O
+```
+
+    ## [1] -0.389
 
   
 ![\\begin{aligned}\\bar{CE}^O(\\phi,\\psi)&=\\bar{Y}(\\phi)-\\bar{Y}(\\psi)\\\\&=\\sum\_{i=3}^4\\frac{\\bar{Y}\_i(\\phi)}{2}-\\sum\_{i=1}^2\\frac{\\bar{Y}\_i(\\psi)}{2}\\\\&=0.116-0.505=-0.389\\end{aligned}](https://latex.codecogs.com/png.latex?%5Cbegin%7Baligned%7D%5Cbar%7BCE%7D%5EO%28%5Cphi%2C%5Cpsi%29%26%3D%5Cbar%7BY%7D%28%5Cphi%29-%5Cbar%7BY%7D%28%5Cpsi%29%5C%5C%26%3D%5Csum_%7Bi%3D3%7D%5E4%5Cfrac%7B%5Cbar%7BY%7D_i%28%5Cphi%29%7D%7B2%7D-%5Csum_%7Bi%3D1%7D%5E2%5Cfrac%7B%5Cbar%7BY%7D_i%28%5Cpsi%29%7D%7B2%7D%5C%5C%26%3D0.116-0.505%3D-0.389%5Cend%7Baligned%7D
@@ -282,9 +320,6 @@ var_CE_D_phi
 "\\hat{\\sigma}_{i0}^2(\\psi)=\\sum_{j=1}^{n_i}\\{Y_{ij}(0;\\psi)-\\hat{Y}_{i}(0;\\psi)\\}^2(1-Z_{ij})/(n_i-K_i-1)")  
 
 ``` r
-CE_D_psi <- CE_D %>% filter(g == 1) %>% .$CE_D
-CE_D_phi <- CE_D %>% filter(g == 0) %>% .$CE_D
-
 c(CE_D_psi - 1.96 * sqrt(var_CE_D_psi), CE_D_psi + 1.96 * sqrt(var_CE_D_psi))
 ```
 
@@ -295,6 +330,98 @@ c(CE_D_phi - 1.96 * sqrt(var_CE_D_phi), CE_D_phi + 1.96 * sqrt(var_CE_D_phi))
 ```
 
     ## [1] -0.03674766  0.03799766
+
+## Indirect Effect
+
+  
+![\\hat{Var}\\bigg(\\hat{CE}^I(\\phi,\\psi)\\bigg)=\\frac{\\hat{\\sigma}^2\_{g0}(\\phi)}{N-C}+\\frac{\\hat{\\sigma}\_{g0}^2(\\psi)}{C}](https://latex.codecogs.com/png.latex?%5Chat%7BVar%7D%5Cbigg%28%5Chat%7BCE%7D%5EI%28%5Cphi%2C%5Cpsi%29%5Cbigg%29%3D%5Cfrac%7B%5Chat%7B%5Csigma%7D%5E2_%7Bg0%7D%28%5Cphi%29%7D%7BN-C%7D%2B%5Cfrac%7B%5Chat%7B%5Csigma%7D_%7Bg0%7D%5E2%28%5Cpsi%29%7D%7BC%7D
+"\\hat{Var}\\bigg(\\hat{CE}^I(\\phi,\\psi)\\bigg)=\\frac{\\hat{\\sigma}^2_{g0}(\\phi)}{N-C}+\\frac{\\hat{\\sigma}_{g0}^2(\\psi)}{C}")  
+
+  
+![\\hat{\\sigma}\_{g0}^2(\\phi)=\\sum\_{i=3}^4\\bigg(\\hat{Y}\_i(0;\\phi)-\\hat{Y}(0;\\phi)\\bigg)^2(1-S\_i)/(N-C-1)](https://latex.codecogs.com/png.latex?%5Chat%7B%5Csigma%7D_%7Bg0%7D%5E2%28%5Cphi%29%3D%5Csum_%7Bi%3D3%7D%5E4%5Cbigg%28%5Chat%7BY%7D_i%280%3B%5Cphi%29-%5Chat%7BY%7D%280%3B%5Cphi%29%5Cbigg%29%5E2%281-S_i%29%2F%28N-C-1%29
+"\\hat{\\sigma}_{g0}^2(\\phi)=\\sum_{i=3}^4\\bigg(\\hat{Y}_i(0;\\phi)-\\hat{Y}(0;\\phi)\\bigg)^2(1-S_i)/(N-C-1)")  
+
+  
+![\\hat{\\sigma}\_{g0}^2(\\psi)=\\sum\_{i=1}^2\\bigg(\\hat{Y}\_i(0;\\psi)-\\hat{Y}(0;\\psi)\\bigg)^2(1-S\_i)/(C-1)](https://latex.codecogs.com/png.latex?%5Chat%7B%5Csigma%7D_%7Bg0%7D%5E2%28%5Cpsi%29%3D%5Csum_%7Bi%3D1%7D%5E2%5Cbigg%28%5Chat%7BY%7D_i%280%3B%5Cpsi%29-%5Chat%7BY%7D%280%3B%5Cpsi%29%5Cbigg%29%5E2%281-S_i%29%2F%28C-1%29
+"\\hat{\\sigma}_{g0}^2(\\psi)=\\sum_{i=1}^2\\bigg(\\hat{Y}_i(0;\\psi)-\\hat{Y}(0;\\psi)\\bigg)^2(1-S_i)/(C-1)")  
+
+``` r
+var_group_data <- summary %>% 
+  mutate(PO_treated = Cases_treated/Total_treated, 
+         PO_control = Cases_control/Total_control) %>%
+  select(group_idx, g_i, PO_treated, PO_control) %>%
+  group_by(g_i) %>%
+  summarise(var_g1 = var(PO_treated), var_g0 = var(PO_control))
+
+var_g0_phi <- var_group_data %>% filter(g_i == 0) %>% .$var_g0
+var_g0_psi <- var_group_data %>% filter(g_i == 1) %>% .$var_g0
+
+var_CE_I <- var_g0_phi/(N-C) + var_g0_psi/C
+
+var_CE_I
+```
+
+    ## [1] 3.514063e-05
+
+``` r
+c(CE_I - 1.96 * sqrt(var_CE_I), CE_I + 1.96 * sqrt(var_CE_I))
+```
+
+    ## [1] -0.025993788 -0.002756212
+
+## Total Effect
+
+  
+![\\hat{Var}\\bigg(\\hat{CE}^T(\\phi,\\psi)\\bigg)=\\frac{\\hat{\\sigma}^2\_{g0}(\\phi)}{N-C}+\\frac{\\hat{\\sigma}\_{g1}^2(\\psi)}{C}](https://latex.codecogs.com/png.latex?%5Chat%7BVar%7D%5Cbigg%28%5Chat%7BCE%7D%5ET%28%5Cphi%2C%5Cpsi%29%5Cbigg%29%3D%5Cfrac%7B%5Chat%7B%5Csigma%7D%5E2_%7Bg0%7D%28%5Cphi%29%7D%7BN-C%7D%2B%5Cfrac%7B%5Chat%7B%5Csigma%7D_%7Bg1%7D%5E2%28%5Cpsi%29%7D%7BC%7D
+"\\hat{Var}\\bigg(\\hat{CE}^T(\\phi,\\psi)\\bigg)=\\frac{\\hat{\\sigma}^2_{g0}(\\phi)}{N-C}+\\frac{\\hat{\\sigma}_{g1}^2(\\psi)}{C}")  
+
+``` r
+var_g1_psi <- var_group_data %>% filter(g_i == 1) %>% .$var_g1
+
+var_CE_T <- var_g0_phi/(N-C) + var_g1_psi/C
+var_CE_T
+```
+
+    ## [1] 0.0001401406
+
+``` r
+c(CE_T - 1.96 * sqrt(var_CE_T), CE_T + 1.96 * sqrt(var_CE_T))
+```
+
+    ## [1] -0.7865777 -0.7401723
+
+## Overall Effect
+
+  
+![\\hat{Var}\\bigg(\\hat{CE}^O(\\phi,\\psi)\\bigg)=\\frac{\\hat{\\sigma}^2\_M(\\phi)}{N-C}+\\frac{\\hat{\\sigma}\_M^2(\\psi)}{C}](https://latex.codecogs.com/png.latex?%5Chat%7BVar%7D%5Cbigg%28%5Chat%7BCE%7D%5EO%28%5Cphi%2C%5Cpsi%29%5Cbigg%29%3D%5Cfrac%7B%5Chat%7B%5Csigma%7D%5E2_M%28%5Cphi%29%7D%7BN-C%7D%2B%5Cfrac%7B%5Chat%7B%5Csigma%7D_M%5E2%28%5Cpsi%29%7D%7BC%7D
+"\\hat{Var}\\bigg(\\hat{CE}^O(\\phi,\\psi)\\bigg)=\\frac{\\hat{\\sigma}^2_M(\\phi)}{N-C}+\\frac{\\hat{\\sigma}_M^2(\\psi)}{C}")  
+
+  
+![\\hat{\\sigma}\_M^2(\\psi)=\\sum\_{i=1}^N\\bigg(\\hat{Y}\_i(\\psi)-\\hat{Y}(\\psi)\\bigg)^2S\_i/(C-1)](https://latex.codecogs.com/png.latex?%5Chat%7B%5Csigma%7D_M%5E2%28%5Cpsi%29%3D%5Csum_%7Bi%3D1%7D%5EN%5Cbigg%28%5Chat%7BY%7D_i%28%5Cpsi%29-%5Chat%7BY%7D%28%5Cpsi%29%5Cbigg%29%5E2S_i%2F%28C-1%29
+"\\hat{\\sigma}_M^2(\\psi)=\\sum_{i=1}^N\\bigg(\\hat{Y}_i(\\psi)-\\hat{Y}(\\psi)\\bigg)^2S_i/(C-1)")  
+
+``` r
+var_O_data <- summary %>%
+  mutate(Total = Total_treated + Total_control, 
+         Cases = Cases_treated + Cases_control, 
+         PO = Cases/Total) %>%
+  select(g_i, PO) %>%
+  group_by(g_i) %>%
+  summarise(var = var(PO))
+
+var_M_psi <- var_O_data %>% filter(g_i == 1) %>% .$var
+var_M_phi <- var_O_data %>% filter(g_i == 0) %>% .$var
+var_CE_O <- var_M_phi/(N-C) + var_M_psi/C
+var_CE_O
+```
+
+    ## [1] 6.25e-05
+
+``` r
+c(CE_O - 1.96 * sqrt(var_CE_O), CE_O + 1.96 * sqrt(var_CE_O))
+```
+
+    ## [1] -0.4044952 -0.3735048
 
 # Reference
 

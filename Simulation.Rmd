@@ -123,6 +123,12 @@ CE_D <- data_CE_D %>%
   summarise(CE_D = mean(CE_D)) 
 
 pander(CE_D)
+
+CE_D_psi <- CE_D %>% filter(g == 1) %>% .$CE_D
+CE_D_psi
+
+CE_D_phi <- CE_D %>% filter(g == 0) %>% .$CE_D
+CE_D_phi
 ```
 
 
@@ -135,9 +141,13 @@ $$\bar{CE}^D(\phi)= \sum_{i=3}^4\frac{\bar{CE}_i^D(\phi)}{2} = 0.00625$$
 ### Indirect Effect
 
 ```{r}
-summary %>% mutate(PO_0 = Cases_control/Total_control) %>%
+summary_I <- summary %>% mutate(PO_0 = Cases_control/Total_control) %>%
   group_by(g_i) %>%
-  summarise(PO_0 = mean(PO_0)) %>% pander
+  summarise(PO_0 = mean(PO_0)) 
+pander(summary_I)
+
+CE_I <- (summary_I %>% filter(g_i == 0) %>% .$PO_0) - (summary_I %>% filter(g_i == 1) %>% .$PO_0)
+CE_I
 ```
 
 
@@ -150,10 +160,14 @@ $$\begin{aligned}\bar{CE}^I(\phi, \psi)&=\bar{Y}(0;\phi)-\bar{Y}(0;\psi)\\
 ### Total Effect
 
 ```{r}
-summary %>% mutate(PO_1 = Cases_treated/Total_treated, 
+summary_T <- summary %>% mutate(PO_1 = Cases_treated/Total_treated, 
                    PO_0 = Cases_control/Total_control) %>%
   group_by(g_i) %>%
-  summarise(PO_1 = mean(PO_1), PO_0 = mean(PO_0)) %>% pander
+  summarise(PO_1 = mean(PO_1), PO_0 = mean(PO_0)) 
+pander(summary_T)
+
+CE_T <- (summary_T %>% filter(g_i == 0) %>% .$PO_0) - (summary_T %>% filter(g_i == 1) %>% .$PO_1)
+CE_T
 ```
 
 
@@ -167,10 +181,14 @@ $$\begin{aligned}\bar{CE}^T(\phi,\psi)&=\bar{CE}^I(\phi,\psi)+\bar{CE}^D(\psi)\\
 ### Overall Effect
 
 ```{r}
-summary %>%
+summary_O <- summary %>%
   mutate(PO = (Cases_treated + Cases_control)/(Total_treated + Total_control)) %>%
   group_by(g_i) %>%
-  summarise(PO = mean(PO)) %>% pander
+  summarise(PO = mean(PO))
+pander(summary_O)
+
+CE_O <- (summary_O %>% filter(g_i == 0) %>% .$PO) - (summary_O %>% filter(g_i == 1) %>% .$PO)
+CE_O
 ```
 
 $$\begin{aligned}\bar{CE}^O(\phi,\psi)&=\bar{Y}(\phi)-\bar{Y}(\psi)\\&=\sum_{i=3}^4\frac{\bar{Y}_i(\phi)}{2}-\sum_{i=1}^2\frac{\bar{Y}_i(\psi)}{2}\\&=0.116-0.505=-0.389\end{aligned}$$
@@ -218,12 +236,74 @@ $$\hat{\sigma}_{i1}^2(\psi)=\sum_{j=1}^{n_i}\{Y_{ij}(1;\psi)-\hat{Y}_{i}(1;\psi)
 $$\hat{\sigma}_{i0}^2(\psi)=\sum_{j=1}^{n_i}\{Y_{ij}(0;\psi)-\hat{Y}_{i}(0;\psi)\}^2(1-Z_{ij})/(n_i-K_i-1)$$
 
 ```{r}
-CE_D_psi <- CE_D %>% filter(g == 1) %>% .$CE_D
-CE_D_phi <- CE_D %>% filter(g == 0) %>% .$CE_D
-
 c(CE_D_psi - 1.96 * sqrt(var_CE_D_psi), CE_D_psi + 1.96 * sqrt(var_CE_D_psi))
 c(CE_D_phi - 1.96 * sqrt(var_CE_D_phi), CE_D_phi + 1.96 * sqrt(var_CE_D_phi))
 ```
+
+## Indirect Effect
+
+$$\hat{Var}\bigg(\hat{CE}^I(\phi,\psi)\bigg)=\frac{\hat{\sigma}^2_{g0}(\phi)}{N-C}+\frac{\hat{\sigma}_{g0}^2(\psi)}{C}$$
+
+$$\hat{\sigma}_{g0}^2(\phi)=\sum_{i=3}^4\bigg(\hat{Y}_i(0;\phi)-\hat{Y}(0;\phi)\bigg)^2(1-S_i)/(N-C-1)$$
+
+
+$$\hat{\sigma}_{g0}^2(\psi)=\sum_{i=1}^2\bigg(\hat{Y}_i(0;\psi)-\hat{Y}(0;\psi)\bigg)^2(1-S_i)/(C-1)$$
+
+```{r}
+var_group_data <- summary %>% 
+  mutate(PO_treated = Cases_treated/Total_treated, 
+         PO_control = Cases_control/Total_control) %>%
+  select(group_idx, g_i, PO_treated, PO_control) %>%
+  group_by(g_i) %>%
+  summarise(var_g1 = var(PO_treated), var_g0 = var(PO_control))
+
+var_g0_phi <- var_group_data %>% filter(g_i == 0) %>% .$var_g0
+var_g0_psi <- var_group_data %>% filter(g_i == 1) %>% .$var_g0
+
+var_CE_I <- var_g0_phi/(N-C) + var_g0_psi/C
+
+var_CE_I
+
+c(CE_I - 1.96 * sqrt(var_CE_I), CE_I + 1.96 * sqrt(var_CE_I))
+```
+
+
+## Total Effect
+
+$$\hat{Var}\bigg(\hat{CE}^T(\phi,\psi)\bigg)=\frac{\hat{\sigma}^2_{g0}(\phi)}{N-C}+\frac{\hat{\sigma}_{g1}^2(\psi)}{C}$$
+
+```{r}
+var_g1_psi <- var_group_data %>% filter(g_i == 1) %>% .$var_g1
+
+var_CE_T <- var_g0_phi/(N-C) + var_g1_psi/C
+var_CE_T
+
+c(CE_T - 1.96 * sqrt(var_CE_T), CE_T + 1.96 * sqrt(var_CE_T))
+```
+
+## Overall Effect
+
+$$\hat{Var}\bigg(\hat{CE}^O(\phi,\psi)\bigg)=\frac{\hat{\sigma}^2_M(\phi)}{N-C}+\frac{\hat{\sigma}_M^2(\psi)}{C}$$
+
+$$\hat{\sigma}_M^2(\psi)=\sum_{i=1}^N\bigg(\hat{Y}_i(\psi)-\hat{Y}(\psi)\bigg)^2S_i/(C-1)$$
+
+```{r}
+var_O_data <- summary %>%
+  mutate(Total = Total_treated + Total_control, 
+         Cases = Cases_treated + Cases_control, 
+         PO = Cases/Total) %>%
+  select(g_i, PO) %>%
+  group_by(g_i) %>%
+  summarise(var = var(PO))
+
+var_M_psi <- var_O_data %>% filter(g_i == 1) %>% .$var
+var_M_phi <- var_O_data %>% filter(g_i == 0) %>% .$var
+var_CE_O <- var_M_phi/(N-C) + var_M_psi/C
+var_CE_O
+
+c(CE_O - 1.96 * sqrt(var_CE_O), CE_O + 1.96 * sqrt(var_CE_O))
+```
+
 
 
 # Reference
