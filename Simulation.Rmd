@@ -19,16 +19,16 @@ This is a scenario for binary outcomes, heterogenoeus group between groups.
 
 ## 1-1. Step 1 
 
-Of the 4000 individuals in the population, $x_{ij}$ is generated as follows :
+Of the 40 individuals in the population, $x_{ij}$ is generated as follows :
 
-$$x_{ij} = \begin{cases}0 &\text{for randomly selected 480 samples}\\1 &\text{for another 480 random samples}\\2&\text{for remaining individuals} \end{cases}$$
+$$x_{ij} = \begin{cases}0 &\text{for randomly selected 5 samples}\\1 &\text{for another 5 random samples}\\2&\text{for remaining individuals} \end{cases}$$
 
 
 ```{r}
-set.seed(0)
-x0 <- rep(0, 480)
-x1 <- rep(1, 480)
-x2 <- rep(2, 4000-480*2)
+set.seed(2)
+x0 <- rep(0, 5)
+x1 <- rep(1, 5)
+x2 <- rep(2, 40-5*2)
 
 x <- sample(c(x0, x1, x2))
 ```
@@ -37,32 +37,33 @@ x <- sample(c(x0, x1, x2))
 
 Potential outcome is defined as follows : 
 
-$$y_{ij}(z_{ij}, \alpha_{ij})=\begin{cases} g_iz_{ij}&\text{if }x_{ij}=2\text{ and }i=1,2\\g_i(1-z_{ij})&\text{if }x_{ij}=2\text{ and }i=3,4\\x_{ij}&\text{otherwise}\end{cases}$$
+$$y_{ij}(z_{ij}, \alpha_{ij})=\begin{cases} g_i(1-z_{ij})&\text{if }x_{ij}=2\text{ and }i=1,2\\g_iz_{ij}&\text{if }x_{ij}=2\text{ and }i=3,4\\x_{ij}&\text{otherwise}\end{cases}$$
 
 ## 1-2. Step 2
 
 Groups were assigned $\alpha_0, \alpha_1$ and individuals assigned z = 1,0 using two stage permutation randomization. 
 
-```{r}
+```{r warning = FALSE, message = FALSE}
+set.seed(0)
 g <- sample(c(1, 1, 0, 0))
 
 z <- list()
 for(i in 1:length(g)) {
   if(g[i] == 1) {
-    z[[i]] <- sample(c(rep(0, 500), rep(1, 500)))
-  } else {z[[i]] <- sample(c(rep(0, 800), rep(1, 200)))}
+    z[[i]] <- sample(c(rep(0, 5), rep(1, 5)))
+  } else {z[[i]] <- sample(c(rep(0, 7), rep(1, 3)))}
 }
 
 
 data <-  bind_cols(z) %>%
   `colnames<-`(1:4) %>%
   gather(key = "group_idx", value = z) %>%
-  bind_cols(data.frame(g = rep(g, each = 1000), x = x))
+  bind_cols(data.frame(g = rep(g, each = 10), x = x))
 
-y <- rep(NA, 4000)
+y <- rep(NA, 40)
 for(i in 1:nrow(data)) {
   if(data$x[i] == 2) {
-    y[i] <- ifelse(data$group_idx[i] %in% 1:2, data$g[i]*data$z[i], data$g[i]*(1-data$z[i]))
+    y[i] <- ifelse(data$group_idx[i] %in% 1:2, data$g[i]*(1-data$z[i]), data$g[i]*data$z[i])
   } else {y[i] <- x[i]}
 }
 
@@ -132,9 +133,9 @@ CE_D_phi
 ```
 
 
-$$\bar{CE}^D(\psi)= \sum_{i=1}^2\frac{\bar{CE}_i^D(\psi)}{2} = -0.749$$
+$$\bar{CE}^D(\psi)= \sum_{i=1}^2\frac{\bar{CE}_i^D(\psi)}{2} = 0.7$$
 
-$$\bar{CE}^D(\phi)= \sum_{i=3}^4\frac{\bar{CE}_i^D(\phi)}{2} = 0.00625$$
+$$\bar{CE}^D(\phi)= \sum_{i=3}^4\frac{\bar{CE}_i^D(\phi)}{2} = -0.095238$$
 
 
 
@@ -152,8 +153,7 @@ CE_I
 
 
 
-$$\begin{aligned}\bar{CE}^I(\phi, \psi)&=\bar{Y}(0;\phi)-\bar{Y}(0;\psi)\\
-    &=\sum_{i=3}^4\frac{\bar{Y}_i(0;\phi)}{2}-\sum_{i=1}^2\frac{\bar{Y}_i(0;\psi)}{2}\\&=0.116-0.13\\&=-0.0144\end{aligned}$$
+$$\begin{aligned}\bar{CE}^I(\phi,\psi)&=\bar{Y}(0;\phi)-\bar{Y}(0;\psi)\\&=\sum_{i=3}^4\frac{\bar{Y}_i(0;\phi)}{2}-\sum_{i=1}^2\frac{\bar{Y}_i(0;\psi)}{2}\\&=0.07143-0.9\\&=-0.8285714\end{aligned}$$
 
 
 
@@ -172,10 +172,10 @@ CE_T
 
 
 
-$$\begin{aligned}\bar{CE}^T(\phi,\psi)&=\bar{Y}(0;\phi)-\bar{Y}(1;\psi)\\&=\sum_{i=3}^4\frac{\bar{Y}_i(0;\phi)}{3}-\sum_{i=1}^2\frac{\bar{Y}_i(1;\psi)}{2}\\&=0.116-0.879=-0.763\end{aligned}$$
+$$\begin{aligned}\bar{CE}^T(\phi,\psi)&=\bar{Y}(0;\phi)-\bar{Y}(1;\psi)\\&=\sum_{i=3}^4\frac{\bar{Y}_i(0;\phi)}{3}-\sum_{i=1}^2\frac{\bar{Y}_i(1;\psi)}{2}\\&=0.07143-0.2=-0.1285714\end{aligned}$$
 
 
-$$\begin{aligned}\bar{CE}^T(\phi,\psi)&=\bar{CE}^I(\phi,\psi)+\bar{CE}^D(\psi)\\&=-0.0144-0.749\\&=-0.763\end{aligned}$$
+$$\begin{aligned}\bar{CE}^T(\phi,\psi)&=\bar{CE}^I(\phi,\psi)+\bar{CE}^D(\psi)\\&=-0.8285714+0.7\\&=-0.1285714\end{aligned}$$
 
 
 ### Overall Effect
@@ -191,7 +191,7 @@ CE_O <- (summary_O %>% filter(g_i == 0) %>% .$PO) - (summary_O %>% filter(g_i ==
 CE_O
 ```
 
-$$\begin{aligned}\bar{CE}^O(\phi,\psi)&=\bar{Y}(\phi)-\bar{Y}(\psi)\\&=\sum_{i=3}^4\frac{\bar{Y}_i(\phi)}{2}-\sum_{i=1}^2\frac{\bar{Y}_i(\psi)}{2}\\&=0.116-0.505=-0.389\end{aligned}$$
+$$\begin{aligned}\bar{CE}^O(\phi,\psi)&=\bar{Y}(\phi)-\bar{Y}(\psi)\\&=\sum_{i=3}^4\frac{\bar{Y}_i(\phi)}{2}-\sum_{i=1}^2\frac{\bar{Y}_i(\psi)}{2}\\&=0.1-0.55=-0.45\end{aligned}$$
 
 
 # 3. Variance and Confidence Interval
@@ -224,7 +224,7 @@ var_CE_D_phi <- (1-(N-C)/N)*var_D_phi/(N-C) + sum(var_CE_D_given_S*(1-g))/(C*(N-
 var_CE_D_phi
 ```
 
-$$\begin{aligned}\hat{Var}\bigg(\hat{CE}^D(\psi)\bigg)&=(1-\frac{C}{N})\frac{\hat{\sigma}_D^2(\psi)}{C}+\frac{1}{CN}\sum_{i=1}^N\hat{Var}\bigg(\hat{CE}_i^D(\psi)|S_i=1\bigg)S_i\\&=0.0001343808\end{aligned}$$
+$$\begin{aligned}\hat{Var}\bigg(\hat{CE}^D(\psi)\bigg)&=(1-\frac{C}{N})\frac{\hat{\sigma}_D^2(\psi)}{C}+\frac{1}{CN}\sum_{i=1}^N\hat{Var}\bigg(\hat{CE}_i^D(\psi)|S_i=1\bigg)S_i\\&=0.01502513\end{aligned}$$
 
 $$\hat{\sigma}_D^2(\psi)=\sum_{i=1}^N\bigg(\hat{CE}_i^D(\psi)-\hat{CE}^D(\psi)\bigg)^2S_i\bigg/(C-1)$$
 
